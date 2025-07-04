@@ -1,12 +1,11 @@
 package steps.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-
-public class createCourierRequest {
+@AllArgsConstructor
+public class CreateCourierRequest {
     private String login;
     private String password;
-    private String firstName;
-
 }

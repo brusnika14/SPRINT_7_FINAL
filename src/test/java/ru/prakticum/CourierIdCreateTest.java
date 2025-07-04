@@ -1,32 +1,16 @@
 package ru.prakticum;
 
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
-import io.restassured.config.LogConfig;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Test;
 import steps.CourierSteps;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
-public class CourierIdTest {
-    private static String login;
-    private static String password;
+public class CourierIdCreateTest extends BaseCourierLoginTest {
     private static int courierId;
-
-    @BeforeClass
-    public static void setup() {
-        RestAssured.config = RestAssured.config()
-                .logConfig(LogConfig.logConfig().enableLoggingOfRequestAndResponseIfValidationFails());
-
-        login = "test_" + RandomStringUtils.randomAlphabetic(10);
-        password = RandomStringUtils.randomAlphabetic(10);
-
-        // Создаем курьера один раз для всех тестов
-        CourierSteps.createCourier(login, password)
-
-                .statusCode(201);
-    }
 
     @AfterClass
     public static void tearDown() {
