@@ -5,8 +5,8 @@ import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.config.LogConfig;
 import io.restassured.response.ValidatableResponse;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -15,15 +15,16 @@ import steps.dto.OrderCreateRequest;
 
 import java.util.List;
 
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 @RunWith(Parameterized.class)
 public class OrderCreateTest {
-    private static int track;
+    private int track;
+    private final List<String> color;
 
-    @Parameterized.Parameter
-    public List<String> color;
+    public OrderCreateTest(List<String> color) {
+        this.color = color;
+    }
 
     @Parameterized.Parameters(name = "Цвет самоката - {0}")
     public static Object[][] dataGen() {
@@ -32,25 +33,27 @@ public class OrderCreateTest {
                 {List.of("BLACK")},
                 {List.of("GREY")},
                 {List.of()},
-                {null}  // Добавляем тест с null
+                {null}
         };
     }
-    @AfterClass
-    public static void tearDown() {
-        try {
-            if (track != 0) {
-                OrderSteps.deleteOrder(track)
-                        .statusCode(200);
-            }
-        } catch (Exception e) {
-            System.out.println("Ошибка при удалении заказа: " + e.getMessage());
-        }
-    }
 
-    @BeforeClass
-    public static void setup() {
+    @Before
+    public void setUp() {
         RestAssured.config = RestAssured.config()
                 .logConfig(LogConfig.logConfig().enableLoggingOfRequestAndResponseIfValidationFails());
+    }
+
+    @After
+    public void tearDown() {
+        if (track != 0) {
+            try {
+                OrderSteps.deleteOrder(track)
+                        .statusCode(200);
+                System.out.println("Успешно удален заказ с track: " + track);
+            } catch (Exception e) {
+                System.out.println("Ошибка при удалении заказа: " + e.getMessage());
+            }
+        }
     }
 
     @Test
@@ -58,10 +61,11 @@ public class OrderCreateTest {
     @Description("Создание заказа с разными вариантами цветов самоката")
     public void orderCreate() {
         OrderCreateRequest orderCreateRequest = new OrderCreateRequest(color);
-        ValidatableResponse validatableResponse = new OrderSteps().orderCreate(orderCreateRequest);
-        track = validatableResponse.extract().response().jsonPath().getInt("track");
-        validatableResponse
-                .log().ifValidationFails()
+        ValidatableResponse response = new OrderSteps().orderCreate(orderCreateRequest);
+
+        track = response.extract().path("track");
+
+        response.assertThat()
                 .statusCode(201)
                 .body("track", notNullValue())
                 .body("track", instanceOf(Integer.class));
